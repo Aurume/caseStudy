@@ -1,0 +1,264 @@
+---
+title: "Bellabeat_case"
+author: "Aurelija Petrauskaitė"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+
+Welcome to my Bellabeat case study. In this real world case I will follow the Case Study Roadmap, which details the steps of the data analysis process: ask, prepare, process, analyze, share, and act.
+
+### About the company
+
+Bellabeat was founded by Urška Sršen and Sando Mur in 2013. It is a high-tech company that manufactures health-focused smart products for women.
+By 2016, Bellabeat had grown - they opened offices around the world and launched multiple products(Leaf, smart watch, smart Spring water bottle).
+Bellabeat products became available through a growing number of online retailers in addition to their own e-commerce channel on their website. The company has invested in traditional advertising media, such as radio, out-of-home billboards, print, and television, but focuses on digital marketing extensively. Bellabeat invests year-round in Google Search, maintaining active Facebook and Instagram pages, and consistently engages consumers on Twitter. Additionally, Bellabeat runs video ads on Youtube and display ads on the Google Display Network to support campaigns around key marketing dates.
+
+## ASK
+
+*Business task*
+
+Find insights what can help guide marketing strategy for the company.
+
+*Stakeholders:*
+
+Urška Sršen and Sando Mur, Bellabeat marketing analytics team.
+
+## PREPARE
+
+Dataset what I used is located on [Kaggle](https://www.kaggle.com/datasets/arashnic/fitbit).
+This Kaggle data set contains personal fitness tracker from thirty fitbit users. It was collected from 2016.04.12 to 2016.05.12.
+The users consented to the submission of personal tracker data such as: minute-level output for physical activity(daily, monthly and steps), heart rate, sleep monitoring.. I think data is valid because it is placed in well known page such as Kaggle.
+
+*FitBit Fitness Tracker Data* dataset is organized into 18 .csv files in long format (the first column is repeated).
+Also this data set have some limitations, because it is a small dataset(only 33 users and only one month of tracking), with not much information about users(age, gender, city).
+I chose to analyze those 4 .csv files:
+
+*dailyCalories*,
+
+*dailySteps*,
+
+*sleepDay*,
+
+*dailyActivity*.
+
+
+Before processing I filtered data to check for blank spaces and zero values.
+Also I sorted all my .csv files be ascending order(daily calories, daily steps, daily sleep, daily activity). So it is easier to see the smallest value.
+
+![*1.Daily calories in ascending order*](/cloud/project/daily_calories_didejanciai.png)
+
+
+
+
+
+## PROCESS
+
+For this part I was using Google Sheet, RStudio, so I can see results faster.
+I've used naming conventions for clarity.
+First, I used "remove duplicates" function and at *sleepDay_clean.csv* I found 3 repeated rows. 411 unique rows left.
+![*2.Remove duplicates*](/cloud/project/tiksliu_kopiju_pasalinimas.png)
+
+
+
+Then, I checked the other files and they all had unique data.
+Also, I checked for empty cells in Google spreadsheet and found 4 zero values in *dailyCalories_clean.csv*.
+
+
+![*3.Daily calories with zero value*](/cloud/project/daily_activities_be_nuliu.png)
+
+
+
+
+At last, I convert date type to yyyy-mm-dd format in daily calories file, what all the date would be in the same format.
+![*4. Date type format*](/cloud/project/Date_convert.png)
+
+
+
+
+### ANALYZE
+
+And now it's time to check if all the data is clean, and make some reviews and calculations and create visualizations.
+
+
+First I uploaded four files I will need.
+![*Uploaded files what I will use in analyze*](/cloud/project/csv_files.png)
+
+
+
+Next step is to install the packages:
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+```
+Then, load my daily calories csv file and create dataframe *daily_calories*.
+
+```{r}
+daily_calories <- read.csv("dailyCalories_clean.csv")
+```
+
+Next, I will create another two dataframes for steps and sleep data.
+
+```{r}
+daily_steps <- read.csv("dailySteps_clean.csv")
+
+daily_sleep <- read.csv("sleepDay_clean.csv")
+
+daily_activity <- read.csv("dailyActivity_clean.csv")
+```
+
+Then take a quick look at the *daily_calories* data:
+
+```{r}
+head(daily_calories)
+```
+ To find out the existing files I used *colnames*:
+ 
+```{r}
+colnames(daily_calories)
+```
+Also I take a look at steps data:
+
+```{r}
+head(daily_steps)
+```
+ *Daily sleep* data :
+ 
+```{r}
+head(daily_sleep)
+```
+Sleep data column names:
+
+```{r}
+colnames(daily_sleep)
+```
+
+Next I counted how many unique users there are in each dataframe.
+
+```{r distinct users}
+n_distinct(daily_calories$Id)
+n_distinct(daily_activity$Id)
+n_distinct(daily_sleep$Id)
+n_distinct(daily_steps$Id)
+```
+From this we can see that there are fewer sleep data users than other datasets(9 less).
+
+I wanted to know how many rows are in the dataframes I used:
+
+```{r}
+nrow(daily_activity)
+nrow(daily_sleep)
+nrow(daily_steps)
+nrow(daily_calories)
+```
+From this data (number of rows) we can also see that there is much less sleep data - more than two times less.
+Therefore, it can be concluded that people either forget to charge the smart watch the night sleep before, or do not wear the watch when they sleep.
+
+
+
+Some summary of *calories* dataframe:
+
+```{r}
+daily_sleep%>%
+  select(TotalSleepRecords,
+  TotalMinutesAsleep,
+  TotalTimeInBed) %>%
+  summary()
+```
+The data shows that people sleep about 419,2 minutes(almost 7 hours).So,this is a good sign, as this is the number of hours(7 to 9 hours) recommended by health professionals.
+
+
+And quick look to all daily activity:
+
+```{r}
+daily_activity %>%
+  select(TotalSteps,
+         TotalDistance,
+         SedentaryMinutes) %>%
+  summary()
+```
+From this we can see that users are less active than recommended by the World Health Organization. The average user walks 7,638 steps, and the recommended step is 10,000 steps.
+
+
+### SHARE
+
+To see insights or patterns I used ggplot function.
+First, I examined how sedentary minutes are related to daily steps:
+
+```{r}
+ggplot(data=daily_activity, aes(TotalSteps, y=SedentaryMinutes))+ geom_point()+
+  labs(title="Total steps vs. Sedentary minutes")
+```
+
+So I can see what there is some correlation between that.
+Next, I wanted to know if the time spent in bed is related to the hours(minutes) of sleep.
+
+```{r}
+ggplot(data=daily_sleep, aes(x=TotalMinutesAsleep, y=TotalTimeInBed))+ geom_point()+
+  labs(title="Minutes asleep vs. Time in Bed")
+```
+
+
+From this we can see that most users spend time in bed and sleep duration is similar.
+
+Next, I wanted to know if those who sleep the most are the most active?For that I needed to merge two datasets(daily steps and daily sleep).
+
+```{r}
+sleep_steps <- merge(daily_sleep, daily_steps, by = "Id")
+```
+
+Quick look at how many users are currently in merged dataset.
+
+```{r}
+n_distinct(sleep_steps$Id)
+```
+When we merged the two datasets we lost some users, because there is only 24 users in *daily_sleep* data.But *dailySteps* has 33 users. So the data can be not accurate.
+
+It would be good to know what the columns in the merged dataset are now:
+
+```{r}
+colnames(sleep_steps)
+```
+With a merged data set, we can test whether there is a relationship between sleep and steps.
+
+```{r}
+ggplot(data=sleep_steps, aes(x=TotalMinutesAsleep, y=StepTotal, color=TotalMinutesAsleep))+ 
+  geom_point()+
+  geom_vline(xintercept = 320, linetype="dashed", color = "black", size = 1.2)+
+  geom_text(aes(x=320, y=0, label="320"))+
+  geom_vline(xintercept = 560, linetype="dashed", color = "black", size = 1.2)+
+  geom_text(aes(x=560, y=0, label="560"))+
+labs(title="Total steps vs. Total sleep")+
+scale_color_gradient(low="lightpink", high="blue")
+```
+
+From the available data, we can see that most users who sleep between 320 minutes(6 hours) and 560 minutes(9hours) are most active during the day.
+I separated the most active period with two dashed lines.
+Therefore, we can do conclusion that those who sleep more walk more steps per day.
+
+
+### ACT
+
+#### Recommendation for Bellabeat:
+
+*1. Recommend users to wear the watch more often at night*.
+
+*2. Also to remind users about the decreasing battery when it will be left, for example, 40%, 30%, 20%, 10%*.
+
+*3. Send newsletters about health, benefits, power of movement*.
+
+*4. Remind users to be active*.
+
+*5. Collect more data about user habits for further analysis*.
+
+
+
+
+
+
